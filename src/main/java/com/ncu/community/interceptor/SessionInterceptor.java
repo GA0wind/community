@@ -40,8 +40,9 @@ public class SessionInterceptor implements HandlerInterceptor {
                 }
             }
         }
-        response.sendRedirect("/");
-        return false;
+//        response.sendRedirect("/");
+//        return false;
+        return true;
     }
 
     @Override

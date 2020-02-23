@@ -4,6 +4,7 @@ import com.ncu.community.dto.PaginationDTO;
 import com.ncu.community.dto.QuestionDTO;
 import com.ncu.community.exception.CustomizeErrorCode;
 import com.ncu.community.exception.CustomizeException;
+import com.ncu.community.mapper.QuestionExtMapper;
 import com.ncu.community.mapper.QuestionMapper;
 import com.ncu.community.mapper.UserMapper;
 import com.ncu.community.model.Question;
@@ -24,6 +25,8 @@ public class QuestionService {
     private UserMapper userMapper;
     @Autowired
     private QuestionMapper questionMapper;
+    @Autowired
+    private QuestionExtMapper questionExtMapper;
 
     public PaginationDTO list(Integer page, Integer size) {
         PaginationDTO paginationDTO = new PaginationDTO();
@@ -35,7 +38,7 @@ public class QuestionService {
 
         Integer offset = size * (page - 1);
 
-        List<Question> questionList = questionMapper.selectByExampleWithRowbounds(new QuestionExample(), new RowBounds(offset,size));
+        List<Question> questionList = questionMapper.selectByExampleWithRowbounds(new QuestionExample(), new RowBounds(offset, size));
         List<QuestionDTO> questionDTOList = new ArrayList<>();
 
 
@@ -51,7 +54,7 @@ public class QuestionService {
         return paginationDTO;
     }
 
-    public PaginationDTO list(Integer userId, Integer page, Integer size) {
+    public PaginationDTO list(Long userId, Integer page, Integer size) {
         PaginationDTO paginationDTO = new PaginationDTO();
 
         QuestionExample questionExample = new QuestionExample();
@@ -66,7 +69,7 @@ public class QuestionService {
 
         QuestionExample example = new QuestionExample();
         example.createCriteria().andCreatorEqualTo(userId);
-        List<Question> questionList = questionMapper.selectByExampleWithRowbounds(example, new RowBounds(offset,size));
+        List<Question> questionList = questionMapper.selectByExampleWithRowbounds(example, new RowBounds(offset, size));
 
         List<QuestionDTO> questionDTOList = new ArrayList<>();
 
@@ -83,29 +86,39 @@ public class QuestionService {
         return paginationDTO;
     }
 
-    public QuestionDTO getById(Integer id) {
+    public QuestionDTO getById(Long id) {
         Question question = questionMapper.selectByPrimaryKey(id);
-        if(question == null){
+        if (question == null) {
             throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
         }
         QuestionDTO questionDTO = new QuestionDTO();
         User user = userMapper.selectByPrimaryKey(question.getCreator());
         questionDTO.setUser(user);
-        BeanUtils.copyProperties(question,questionDTO);
+        BeanUtils.copyProperties(question, questionDTO);
         return questionDTO;
     }
 
     public void createOrUpdate(Question question) {
-        if (question.getId() == null){
+        if (question.getId() == null) {
             question.setGmtCreate(System.currentTimeMillis());
             question.setGmtModified(question.getGmtCreate());
+            question.setCommentCount(0);
+            question.setLikeCount(0);
+            question.setViewCount(0);
             questionMapper.insertSelective(question);
         } else {
             question.setGmtModified(System.currentTimeMillis());
             int updated = questionMapper.updateByPrimaryKeySelective(question);
-            if (updated != 1){
+            if (updated != 1) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_UPDATE_FAIL);
             }
         }
+    }
+
+    public void incView(Long id) {
+        Question question = new Question();
+        question.setId(id);
+        question.setViewCount(1);
+        questionExtMapper.incView(question);
     }
 }
