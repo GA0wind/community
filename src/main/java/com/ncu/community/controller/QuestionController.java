@@ -1,8 +1,9 @@
 package com.ncu.community.controller;
 
-import com.ncu.community.dto.CommentCreateDTO;
 import com.ncu.community.dto.CommentDTO;
 import com.ncu.community.dto.QuestionDTO;
+import com.ncu.community.enums.CommentTypeEnum;
+import com.ncu.community.model.Question;
 import com.ncu.community.service.CommentService;
 import com.ncu.community.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +29,16 @@ public class QuestionController {
                            Model model) {
         QuestionDTO questionDTO = questionService.getById(id);
         //累加阅读数
+        List<QuestionDTO> relatedQuestions = questionService.selectRelated(questionDTO);
 
-        List<CommentDTO> commentDTOList = commentService.listByQuestionId(id);
+        List<CommentDTO> commentDTOList = commentService.listByTargetId(id, CommentTypeEnum.QUESTION);
 
         questionService.incView(id);
 
         model.addAttribute("question", questionDTO);
-        model.addAttribute("comments",commentDTOList);
+        model.addAttribute("comments", commentDTOList);
+        model.addAttribute("relatedQuestions", relatedQuestions);
+
         return "question";
     }
 

@@ -1,5 +1,6 @@
 package com.ncu.community.controller;
 
+import com.ncu.community.cache.TagCache;
 import com.ncu.community.dto.QuestionDTO;
 import com.ncu.community.mapper.QuestionMapper;
 import com.ncu.community.model.Question;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -31,11 +33,15 @@ public class PublishController {
         model.addAttribute("description", questionDTO.getDescription());
         model.addAttribute("tag", questionDTO.getTag());
         model.addAttribute("id",questionDTO.getId());
+        model.addAttribute("tags", TagCache.get());
+
         return "publish";
     }
 
     @GetMapping("/publish")
-    public String publish() {
+    public String publish(Model model) {
+        model.addAttribute("tags", TagCache.get());
+
         return "publish";
     }
 

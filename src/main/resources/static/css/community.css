@@ -22,6 +22,16 @@ body{
     font-weight: normal;
     color: #999;
 }
+.publish-tag-tab{
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+.publish-tag-tab .tag{
+    white-space: normal;
+    margin: 5px 5px;
+    display: inline-block;
+}
 .profile .section{
     margin-top: 15px;
     border: none;
@@ -30,10 +40,12 @@ body{
     margin-top: 25px;
 }
 .question-edit{
-    display: block;
     color: #999;
     font-size: 13px;
     margin-bottom: 15px;
+}
+.question-tag{
+    margin-right: 10px;
 }
 .jumbotron{
     margin: 50px;
@@ -53,6 +65,9 @@ body{
     color: #999;
     margin-top: 5px;
 }
+.active{
+    color: #499ef3;
+}
 .comment-menu .icon{
     margin-right: 6px;
     font-size: 15px;
@@ -61,6 +76,16 @@ body{
 
 .comment-menu .icon:hover{
     color: #499ef3;
+}
+.sub-comment-border{
+    border-radius: 5px;
+    margin-top: 10px;
+    border: 1px solid #eee;
+    padding-top: 15px;
+    margin-bottom: 15px;
+}
+.sub-comment-comment{
+    margin: 10px 0;
 }
 .comments{
     padding-bottom: 5px;

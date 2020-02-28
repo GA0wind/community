@@ -4,10 +4,7 @@ import com.ncu.community.dto.CommentDTO;
 import com.ncu.community.enums.CommentTypeEnum;
 import com.ncu.community.exception.CustomizeErrorCode;
 import com.ncu.community.exception.CustomizeException;
-import com.ncu.community.mapper.CommentMapper;
-import com.ncu.community.mapper.QuestionExtMapper;
-import com.ncu.community.mapper.QuestionMapper;
-import com.ncu.community.mapper.UserMapper;
+import com.ncu.community.mapper.*;
 import com.ncu.community.model.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +22,8 @@ public class CommentService {
 
     @Autowired
     private CommentMapper commentMapper;
+    @Autowired
+    private CommentExtMapper commentExtMapper;
 
     @Autowired
     private QuestionMapper questionMapper;
@@ -37,24 +36,31 @@ public class CommentService {
 
     @Transactional
     public void insert(Comment comment) {
-        if(comment.getParentId() == null || comment.getParentId() == 0){
+        if (comment.getParentId() == null || comment.getParentId() == 0) {
             throw new CustomizeException(CustomizeErrorCode.TARGET_PARAM_NOT_FOUND);
         }
 
-        if(comment.getType() == null || !CommentTypeEnum.isExist(comment.getType())){
+        if (comment.getType() == null || !CommentTypeEnum.isExist(comment.getType())) {
             throw new CustomizeException(CustomizeErrorCode.TARGET_PARAM_NOT_FOUND);
         }
 
-        if (comment.getType() == CommentTypeEnum.COMMENT.getType()){
+        if (comment.getType() == CommentTypeEnum.COMMENT.getType()) {
             //回复评论
             Comment dbcomment = commentMapper.selectByPrimaryKey(comment.getParentId());
-            if(dbcomment == null){
+            if (dbcomment == null) {
                 throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
             }
             commentMapper.insert(comment);
-        }else{
+
+
+            //增加二级评论数
+            Comment parentComment = new Comment();
+            parentComment.setId(comment.getParentId());
+            parentComment.setCommentCount(1);
+            commentExtMapper.incCommentCount(parentComment);
+        } else {
             Question question = questionMapper.selectByPrimaryKey(comment.getParentId());
-            if(question == null){
+            if (question == null) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
             }
 
@@ -65,16 +71,16 @@ public class CommentService {
         }
     }
 
-    public List<CommentDTO> listByQuestionId(Long id) {
+    public List<CommentDTO> listByTargetId(Long id, CommentTypeEnum type) {
         CommentExample commentExample = new CommentExample();
         commentExample.createCriteria()
                 .andParentIdEqualTo(id)
-        .andTypeEqualTo(CommentTypeEnum.QUESTION.getType());
+                .andTypeEqualTo(type.getType());
         commentExample.setOrderByClause("gmt_create desc");
 
         List<Comment> commentList = commentMapper.selectByExample(commentExample);
 
-        if(commentList.size() == 0){
+        if (commentList.size() == 0) {
             return new ArrayList<>();
         }
 
@@ -94,7 +100,7 @@ public class CommentService {
 
         List<CommentDTO> commentDTOList = commentList.stream().map(comment -> {
             CommentDTO commentDTO = new CommentDTO();
-            BeanUtils.copyProperties(comment,commentDTO);
+            BeanUtils.copyProperties(comment, commentDTO);
             commentDTO.setUser(userMap.get(comment.getCommentator()));
             return commentDTO;
         }).collect(Collectors.toList());

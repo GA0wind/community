@@ -10,6 +10,7 @@ import com.ncu.community.mapper.UserMapper;
 import com.ncu.community.model.Question;
 import com.ncu.community.model.QuestionExample;
 import com.ncu.community.model.User;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class QuestionService {
@@ -38,7 +40,9 @@ public class QuestionService {
 
         Integer offset = size * (page - 1);
 
-        List<Question> questionList = questionMapper.selectByExampleWithRowbounds(new QuestionExample(), new RowBounds(offset, size));
+        QuestionExample questionExample = new QuestionExample();
+        questionExample.setOrderByClause("gmt_create desc");
+        List<Question> questionList = questionMapper.selectByExampleWithRowbounds(questionExample, new RowBounds(offset, size));
         List<QuestionDTO> questionDTOList = new ArrayList<>();
 
 
@@ -120,5 +124,25 @@ public class QuestionService {
         question.setId(id);
         question.setViewCount(1);
         questionExtMapper.incView(question);
+    }
+
+    public List<QuestionDTO> selectRelated(QuestionDTO questionDTO) {
+
+        if (StringUtils.isBlank(questionDTO.getTag())){
+            return new ArrayList<>();
+        }
+        String regexTag = StringUtils.replaceChars(questionDTO.getTag(), ",", "|");
+        Question question = new Question();
+        question.setId(questionDTO.getId());
+        question.setTag(regexTag);
+        List<Question> questions = questionExtMapper.selectRelated(question);
+
+        List<QuestionDTO> questionDTOS = questions.stream().map(q -> {
+            QuestionDTO tempQuestionDTO = new QuestionDTO();
+            BeanUtils.copyProperties(q,tempQuestionDTO);
+            return tempQuestionDTO;
+        }).collect(Collectors.toList());
+
+        return questionDTOS;
     }
 }
